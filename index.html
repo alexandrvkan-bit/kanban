@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Доски проектов</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0F2F5; --side:#FAFBFC; --lane:#E6E9EE; --lane-hi:#DDE3F3; --card:#FFFFFF; --surface:#FFFFFF; --field:#F5F6F8;
+  --ink:#171A21; --ink-2:#3A404C; --muted:#737B89; --line:#E1E4EA; --line-2:#CDD2DA;
+  --accent:#2F5BD3; --accent-2:#244BB5; --accent-ink:#FFFFFF; --accent-soft:rgba(47,91,211,.10);
+  --danger:#D0453B; --warn:#D48B12; --ok:#2E9E68; --focus:rgba(47,91,211,.45);
+  --sh-card:0 0 0 1px rgba(20,28,45,.06),0 1px 2px rgba(20,28,45,.06);
+  --sh-hover:0 0 0 1px rgba(20,28,45,.08),0 6px 16px -4px rgba(20,28,45,.12);
+  --sh-lift:0 0 0 1px rgba(20,28,45,.06),0 22px 40px -12px rgba(20,28,45,.35);
+  --sh-pop:0 0 0 1px rgba(20,28,45,.06),0 30px 70px -20px rgba(20,28,45,.35);
+  --r-s:8px; --r-m:12px; --r-l:16px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --font:"Onest", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --display:"Unbounded", "Onest", system-ui, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1115; --side:#13161B; --lane:#181B21; --lane-hi:#1D2436; --card:#20242C; --surface:#1B1F26; --field:#252A33;
+    --ink:#E9EBEF; --ink-2:#C3C8D1; --muted:#8C94A2; --line:#2A2F38; --line-2:#363C47;
+    --accent:#7D9CF2; --accent-2:#94AEF5; --accent-ink:#0E1220; --accent-soft:rgba(125,156,242,.14);
+    --danger:#EF7A70; --warn:#E9AE4B; --ok:#5CC592; --focus:rgba(125,156,242,.5);
+    --sh-card:0 0 0 1px rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.4);
+    --sh-hover:0 0 0 1px rgba(255,255,255,.09),0 8px 18px -6px rgba(0,0,0,.6);
+    --sh-lift:0 0 0 1px rgba(255,255,255,.08),0 24px 44px -12px rgba(0,0,0,.75);
+    --sh-pop:0 0 0 1px rgba(255,255,255,.07),0 30px 80px -20px rgba(0,0,0,.8);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1115; --side:#13161B; --lane:#181B21; --lane-hi:#1D2436; --card:#20242C; --surface:#1B1F26; --field:#252A33;
+  --ink:#E9EBEF; --ink-2:#C3C8D1; --muted:#8C94A2; --line:#2A2F38; --line-2:#363C47;
+  --accent:#7D9CF2; --accent-2:#94AEF5; --accent-ink:#0E1220; --accent-soft:rgba(125,156,242,.14);
+  --danger:#EF7A70; --warn:#E9AE4B; --ok:#5CC592; --focus:rgba(125,156,242,.5);
+  --sh-card:0 0 0 1px rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.4);
+  --sh-hover:0 0 0 1px rgba(255,255,255,.09),0 8px 18px -6px rgba(0,0,0,.6);
+  --sh-lift:0 0 0 1px rgba(255,255,255,.08),0 24px 44px -12px rgba(0,0,0,.75);
+  --sh-pop:0 0 0 1px rgba(255,255,255,.07),0 30px 80px -20px rgba(0,0,0,.8);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.45 var(--font);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+button,input,select,textarea{font:inherit;color:inherit}
+button{-webkit-tap-highlight-color:transparent}
+:focus{outline:none}
+:focus-visible{outline:none;box-shadow:0 0 0 3px var(--focus)!important}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:16px;height:16px}
+svg.ic{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:10px;border:3px solid transparent;background-clip:padding-box}
+:hover::-webkit-scrollbar-thumb{background-color:var(--line-2)}
+
+/* layout */
+.app{display:grid;grid-template-columns:224px 1fr;height:100vh;height:100dvh;transition:grid-template-columns .28s var(--ease)}
+.app.side-collapsed{grid-template-columns:0 1fr}
+.app.side-collapsed .sidebar{overflow:hidden;border-right-color:transparent}
+.sidebar{background:var(--side);display:flex;flex-direction:column;min-height:0;min-width:0;border-right:1px solid var(--line)}
+.side-head{padding:20px 18px 8px;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;white-space:nowrap}
+.projects{flex:1;overflow-y:auto;padding:0 8px;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:2px}
+.proj-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:var(--r-s);padding:6px 8px;cursor:pointer;color:var(--ink-2);transition:background .15s,color .15s}
+.proj-btn:hover{background:var(--lane)}
+.proj-btn.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+.proj-btn .avatar{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:600;color:#fff;background:var(--c);flex:none}
+.proj-btn .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-btn .n{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500}
+.add-project{margin:6px 8px 8px;width:calc(100% - 16px)}
+.side-foot .btn.ghost{white-space:normal;text-align:left}
+.archived{margin:0 8px 10px;font-size:13px;color:var(--muted)}
+.archived summary{cursor:pointer;padding:6px 8px;border-radius:var(--r-s);list-style:none}
+.archived summary:hover{background:var(--lane)}
+.archived ul{list-style:none;margin:0;padding:0}
+.archived li{display:flex;justify-content:space-between;gap:6px;align-items:center;padding:4px 8px}
+.side-foot{border-top:1px solid var(--line);padding:10px 8px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:2px}
+.sync{display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:1.35;margin:0 0 6px;padding:8px 10px;border-radius:var(--r-s);background:var(--lane);color:var(--muted)}
+.sync .dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex:none;background:var(--muted);position:relative}
+.sync[data-kind="ok"] .dot{background:var(--ok)}
+.sync[data-kind="saving"] .dot,.sync[data-kind="pending"] .dot,.sync[data-kind="offline"] .dot{background:var(--warn)}
+.sync[data-kind="saving"] .dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--warn);opacity:.5;animation:pulse 1.1s var(--ease) infinite}
+.sync[data-kind="error"] .dot,.sync[data-kind="conflict"] .dot{background:var(--danger)}
+.sync[data-kind="error"],.sync[data-kind="conflict"]{color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,transparent)}
+@keyframes pulse{from{transform:scale(.6);opacity:.7}to{transform:scale(1.4);opacity:0}}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--surface);border:0;box-shadow:var(--sh-card);border-radius:var(--r-s);padding:7px 12px;cursor:pointer;white-space:nowrap;font-weight:500;color:var(--ink-2);transition:background .15s,box-shadow .15s,transform .12s var(--ease),color .15s}
+.btn:hover{box-shadow:var(--sh-hover);color:var(--ink)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 1px 2px rgba(20,28,45,.15),inset 0 1px 0 rgba(255,255,255,.15)}
+.btn.primary:hover{background:var(--accent-2);color:var(--accent-ink)}
+.btn.danger{color:var(--danger);background:none;box-shadow:none}
+.btn.danger:hover{background:color-mix(in srgb,var(--danger) 10%,transparent);box-shadow:none;color:var(--danger)}
+.btn.ghost{background:none;box-shadow:none;justify-content:flex-start;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--lane);box-shadow:none}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.icon-btn{display:inline-grid;place-items:center;background:none;border:0;border-radius:var(--r-s);width:32px;height:32px;cursor:pointer;color:var(--muted);flex:none;transition:background .15s,color .15s,transform .12s var(--ease)}
+.icon-btn:hover{background:var(--lane);color:var(--ink)}
+.icon-btn:active{transform:scale(.92)}
+
+/* top */
+main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 18px 4px;flex-wrap:wrap}
+.project-title{font-family:var(--display);font-weight:500;font-size:21px;line-height:1.2;margin:0;cursor:text;letter-spacing:-.015em;flex:1;min-width:0;overflow-wrap:anywhere;padding:3px 6px;margin-left:-6px;border-radius:var(--r-s);transition:background .15s}
+.project-title:hover{background:var(--lane)}
+.top-actions{display:flex;gap:6px;flex-wrap:wrap}
+.filterbar{display:flex;gap:6px;align-items:center;padding:8px 18px 12px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--surface);box-shadow:var(--sh-card);border-radius:999px;padding:4px 11px 4px 9px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--ink-2);transition:background .15s,box-shadow .15s,color .15s,transform .12s var(--ease)}
+.chip:hover{box-shadow:var(--sh-hover)}
+.chip:active{transform:scale(.96)}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chip.on{background:color-mix(in srgb,var(--c) 16%,var(--surface));color:var(--ink);box-shadow:0 0 0 1.5px color-mix(in srgb,var(--c) 60%,transparent)}
+.search-wrap{margin-left:auto;position:relative;display:flex;align-items:center;min-width:170px}
+.search-wrap svg{position:absolute;left:10px;color:var(--muted);pointer-events:none}
+.search{width:100%;padding:7px 10px 7px 32px;border:0;border-radius:var(--r-s);background:var(--surface);box-shadow:var(--sh-card);transition:box-shadow .15s}
+.search:focus{box-shadow:0 0 0 3px var(--focus)}
+
+/* board */
+.board{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:12px;padding:0 18px 16px;overflow-x:auto}
+.col{background:var(--lane);border-radius:var(--r-l);display:flex;flex-direction:column;min-height:0;transition:background .2s,box-shadow .2s}
+.col[data-col="sprint"]{background:color-mix(in srgb,var(--accent) 7%,var(--lane))}
+.col-head{display:flex;align-items:center;gap:8px;padding:12px 12px 8px 14px}
+.col-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.col[data-col="sprint"] .col-dot{background:var(--accent)}
+.col[data-col="doing"] .col-dot{background:var(--warn)}
+.col[data-col="done"] .col-dot{background:var(--ok)}
+.col-head h2{font-size:13.5px;font-weight:600;margin:0;cursor:text;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 4px;margin-left:-4px;border-radius:6px}
+.col-head h2:hover{background:rgba(127,127,127,.12)}
+.count{font-size:11.5px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;background:rgba(127,127,127,.13);padding:1px 8px;border-radius:999px}
+.col.over .count{color:#fff;background:var(--danger)}
+.col.over{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--danger) 45%,transparent)}
+.list{flex:1;overflow-y:auto;padding:2px 8px 6px;display:flex;flex-direction:column;gap:7px;min-height:60px;border-radius:var(--r-m);transition:background .2s}
+body.is-dragging .list{background:rgba(127,127,127,.06)}
+.list.drop{background:var(--accent-soft)}
+.quick-add{padding:2px 8px 10px}
+.quick-add textarea{display:block;width:100%;resize:none;border:0;background:transparent;border-radius:var(--r-s);padding:8px 10px;min-height:36px;color:var(--ink);transition:background .15s,box-shadow .15s}
+.quick-add textarea::placeholder{color:var(--muted)}
+.quick-add textarea:hover{background:rgba(127,127,127,.1)}
+.quick-add textarea:focus{background:var(--card);box-shadow:var(--sh-hover),0 0 0 2px var(--focus)}
+
+/* card */
+.card{position:relative;background:var(--card);border-radius:var(--r-m);box-shadow:var(--sh-card);cursor:grab;flex:none;padding:9px 11px 10px;transition:box-shadow .18s var(--ease),transform .18s var(--ease)}
+.card:hover{box-shadow:var(--sh-hover);transform:translateY(-1px)}
+.card:active{cursor:grabbing}
+.card.hidden{display:none}
+.card.enter{animation:cardIn .32s var(--ease)}
+@keyframes cardIn{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+.card-labels{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;line-height:1;padding:4px 7px 4px 6px;border-radius:6px;color:color-mix(in srgb,var(--c) 72%,var(--ink));background:color-mix(in srgb,var(--c) 14%,transparent);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag i{width:6px;height:6px;border-radius:50%;background:var(--c);flex:none}
+.card-title{font-size:14px;line-height:1.38;overflow-wrap:anywhere;white-space:pre-wrap;color:var(--ink)}
+.card.important .card-title{font-weight:600}
+.flag{display:inline-flex;vertical-align:-2px;margin-right:4px;color:var(--danger)}
+.flag svg.ic{width:13px;height:13px;fill:currentColor;stroke-width:1.5}
+.card-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:7px;font-size:11.5px;color:var(--muted);font-weight:500}
+.card-meta span{display:inline-flex;align-items:center;gap:4px}
+.card-meta svg.ic{width:13px;height:13px}
+.card-meta .late{color:var(--danger)}
+.card-meta .full{color:var(--ok)}
+.col[data-col="done"] .card-title{color:var(--muted)}
+.col[data-col="done"] .card{box-shadow:0 0 0 1px var(--line)}
+.col[data-col="done"] .tag{filter:saturate(.5);opacity:.85}
+.card-ghost{box-shadow:none!important;background:var(--accent-soft)!important;outline:1.5px dashed color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:-1.5px}
+.card-ghost>*{visibility:hidden}
+.card-chosen{box-shadow:var(--sh-hover)}
+.card-drag{opacity:1!important;rotate:2.5deg;scale:1.03;box-shadow:var(--sh-lift)!important;cursor:grabbing!important;transition:none!important}
+body.is-dragging,body.is-dragging *{cursor:grabbing!important}
+.empty{margin:auto;max-width:420px;text-align:center;padding:40px 20px}
+.empty h2{font-family:var(--display);font-weight:500;font-size:20px}
+
+/* modal */
+.modal-wrap{position:fixed;inset:0;background:rgba(12,16,24,.38);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:7vh 14px;z-index:50;overflow-y:auto;animation:fadeIn .18s ease-out}
+.modal{background:var(--surface);border-radius:var(--r-l);width:min(540px,100%);box-shadow:var(--sh-pop);max-height:86vh;max-height:86dvh;display:flex;flex-direction:column;animation:popIn .24s var(--ease)}
+.modal.wide{width:min(720px,100%)}
+.modal-wrap.closing{animation:fadeOut .16s ease-in forwards;pointer-events:none}
+.modal-wrap.closing .modal{animation:popOut .16s ease-in forwards}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes popIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes popOut{to{opacity:0;transform:translateY(6px) scale(.98)}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 14px 6px 22px}
+.modal-head h3{margin:0;font-size:16px;font-weight:600;letter-spacing:-.005em}
+.modal-body{padding:8px 22px 18px;overflow-y:auto;min-height:0}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.modal-foot .btn.danger{margin-right:auto}
+.field{display:grid;gap:5px;margin:0 0 14px}
+.field>span{font-size:12px;font-weight:500;color:var(--muted)}
+.field input[type=text],.field input[type=password],.field input[type=date],.field input[type=number],.field select,.field textarea,.label-list input{width:100%;border:1px solid transparent;border-radius:var(--r-s);background:var(--field);padding:8px 10px;transition:border-color .15s,background .15s,box-shadow .15s}
+.field input:hover,.field select:hover,.field textarea:hover,.label-list input:hover{border-color:var(--line-2)}
+.field input:focus,.field select:focus,.field textarea:focus,.label-list input:focus{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 3px var(--focus)}
+.field textarea{resize:vertical}
+.title-input{font-size:17px;font-weight:600;line-height:1.35}
+.modal .field .title-input{background:transparent;padding:6px 8px;margin-left:-8px;width:calc(100% + 8px)}
+.field-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.field-row .field{flex:1;min-width:150px}
+.check{display:inline-flex;gap:8px;align-items:center;margin:0 0 22px;cursor:pointer;font-weight:500}
+.label-picker{display:flex;flex-wrap:wrap;gap:6px}
+.lp{position:relative;display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 11px 5px 9px;cursor:pointer;font-size:12.5px;font-weight:500;background:var(--field);color:var(--ink-2);transition:background .15s,box-shadow .15s,transform .12s var(--ease)}
+.lp:hover{box-shadow:inset 0 0 0 1px var(--line-2)}
+.lp:active{transform:scale(.96)}
+.lp input{position:absolute;opacity:0;pointer-events:none}
+.lp i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.lp.on{background:color-mix(in srgb,var(--c) 16%,var(--surface));color:var(--ink);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--c) 65%,transparent)}
+.lp:focus-within{box-shadow:0 0 0 3px var(--focus)}
+.checklist{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:2px}
+.checklist li{display:flex;gap:8px;align-items:center;padding:0 4px;border-radius:var(--r-s)}
+.checklist li:hover{background:var(--field)}
+.checklist input[type=text]{flex:1;border:1px solid transparent;background:none;padding:5px 6px;border-radius:6px}
+.checklist input[type=text]:focus{border-color:var(--accent);background:var(--surface)}
+.checklist input[type=checkbox]:checked+input[type=text]{text-decoration:line-through;color:var(--muted)}
+.ci-add{width:100%;border:1px dashed var(--line-2);background:none;border-radius:var(--r-s);padding:7px 10px;transition:border-color .15s}
+.ci-add:focus{border-style:solid;border-color:var(--accent)}
+.label-list{list-style:none;margin:10px 0 4px;padding:0;display:grid;gap:10px}
+.label-list li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 10px 12px;border-radius:var(--r-m);background:var(--field)}
+.label-list li input{background:var(--surface)}
+.swatches{grid-column:1/-1;display:flex;gap:7px;flex-wrap:wrap}
+.sw{width:22px;height:22px;border-radius:50%;border:0;background:var(--c);cursor:pointer;padding:0;transition:transform .15s var(--ease),box-shadow .15s}
+.sw:hover{transform:scale(1.12)}
+.sw.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c)}
+.stack{display:grid;gap:8px}
+.new-label{background:var(--field);border-radius:var(--r-m);padding:14px;display:grid;gap:12px}
+.new-label .field{margin:0}
+.new-label .field input{background:var(--surface)}
+.new-label .btn.primary{justify-self:start}
+.section{padding:14px 0;border-top:1px solid var(--line)}
+.section:first-child{border-top:0;padding-top:2px}
+.section h4{margin:0 0 8px;font-size:14px;font-weight:600}
+.steps{margin:6px 0 0;padding-left:20px}
+.steps li{margin-bottom:5px}
+.week{border-radius:var(--r-m);margin-bottom:8px;background:var(--field);overflow:hidden}
+.week summary{cursor:pointer;padding:10px 14px;font-weight:500;list-style:none}
+.week summary:hover{background:rgba(127,127,127,.08)}
+.week ul{list-style:none;margin:0;padding:0 14px 10px}
+.week li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:10px 0;align-items:baseline}
+.kv strong{font-variant-numeric:tabular-nums}
+.radio{display:flex;gap:8px;align-items:center;margin:6px 0;cursor:pointer}
+code{font-size:12.5px;background:var(--field);padding:1px 6px;border-radius:5px}
+a{color:var(--accent)}
+
+/* toasts */
+.toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:grid;gap:8px;z-index:60;width:min(440px,calc(100% - 28px));pointer-events:none}
+.toast{pointer-events:auto;background:#1A1E26;color:#EEF0F4;border-radius:var(--r-m);padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 12px 30px -8px rgba(0,0,0,.45);font-size:13.5px;animation:toastIn .28s var(--ease)}
+.toast.out{animation:toastOut .2s ease-in forwards}
+.toast button{background:rgba(255,255,255,.12);border:0;color:#fff;font-weight:600;cursor:pointer;padding:5px 10px;border-radius:6px;white-space:nowrap}
+.toast button:hover{background:rgba(255,255,255,.2)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(8px)}}
+
+@media (max-width:820px){
+  .app,.app.side-collapsed{grid-template-columns:1fr}
+  .app.side-collapsed .sidebar{overflow:visible}
+  .sidebar{position:fixed;inset:0 auto 0 0;width:272px;z-index:40;transform:translateX(-100%);transition:transform .28s var(--ease)}
+  .sidebar.open{transform:none;box-shadow:var(--sh-pop)}
+  .project-title{font-size:18px}
+  .topbar,.filterbar{padding-left:12px;padding-right:12px}
+  .top-actions .btn .lbl{display:none}
+  .board{padding:0 12px 12px;grid-template-columns:repeat(4,minmax(82vw,1fr));scroll-snap-type:x mandatory}
+  .col{scroll-snap-align:start}
+  .search-wrap{margin-left:0;flex:1}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}.card-drag{rotate:none;scale:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main id="main"></main>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants & helpers ---------- */
+const COLS=[['backlog','Бэклог'],['sprint','Спринт недели'],['doing','В работе'],['done','Готово']];
+const COL_IDS=COLS.map(c=>c[0]);
+const PALETTE=['#D64545','#E07B39','#D9A21B','#3E9B5C','#2A9D8F','#3A72C9','#7A5CC7','#C2528B','#8C6A4F','#6B7785'];
+const K_DATA='kanban.data.v1', K_SET='kanban.settings.v1', K_BAK='kanban.backups.v1';
+const GIST_FILE='kanban-data.json';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const nowISO=()=>new Date().toISOString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const ICONS={
+  sidebar:'<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9.5 4v16"/>',
+  tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.3"/>',
+  check:'<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.7L16 9.5"/>',
+  archive:'<rect x="3" y="4" width="18" height="4.5" rx="1.2"/><path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5M10 12.5h4"/>',
+  dots:'<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/>',
+  cloud:'<path d="M17.5 19a4.5 4.5 0 1 0-1.3-8.8A6 6 0 0 0 4.6 12 3.5 3.5 0 0 0 6 19h11.5Z"/>',
+  down:'<path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/>',
+  up:'<path d="M12 16V5m0 0-4 4m4-4 4 4M5 20h14"/>',
+  cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+  list:'<path d="m4 7 2 2 3.5-3.5M4 17l2 2 3.5-3.5M13 7h7M13 17h7"/>',
+  text:'<path d="M4 6h16M4 12h16M4 18h10"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  flag:'<path d="M5 21V4.5h11.5L15 8.5l1.5 4H5"/>',
+  reset:'<path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/>'
+};
+const ic=(n)=>'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+ICONS[n]+'</svg>';
+function hashColor(str){let h=0;for(const ch of String(str))h=(h*31+ch.charCodeAt(0))>>>0;return PALETTE[h%PALETTE.length]}
+function lsGet(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){console.warn(e);return false}}
+function fmtDate(iso){if(!iso)return'';const d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString('ru-RU')}
+function fmtDateTime(iso){if(!iso)return'';const d=new Date(iso);return isNaN(d)?'':d.toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+function fmtDue(s){const d=new Date(s+'T00:00:00');return isNaN(d)?s:d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<12||m100>14))return b;return c}
+
+/* ---------- state ---------- */
+function makeProject(name){return{id:uid(),name:name,archived:false,createdAt:nowISO(),colNames:{},wipLimit:5,labels:[],cards:[],weeks:[]}}
+function normalizeCard(c){c.id=c.id||uid();c.title=String(c.title||'Без названия');c.labels=Array.isArray(c.labels)?c.labels:[];c.checklist=Array.isArray(c.checklist)?c.checklist:[];if(!COL_IDS.includes(c.col))c.col='backlog';c.createdAt=c.createdAt||nowISO();return c}
+function normalizeState(s){
+  if(!s||!Array.isArray(s.projects))return null;
+  s.version=1;
+  s.projects.forEach(p=>{p.id=p.id||uid();p.name=p.name||'Проект';p.colNames=p.colNames||{};p.labels=Array.isArray(p.labels)?p.labels:[];p.cards=Array.isArray(p.cards)?p.cards:[];p.weeks=Array.isArray(p.weeks)?p.weeks:[];if(p.wipLimit==null)p.wipLimit=5;p.cards.forEach(normalizeCard);p.weeks.forEach(w=>{w.cards=(w.cards||[]).map(normalizeCard)})});
+  if(!s.projects.find(p=>p.id===s.activeProjectId&&!p.archived)){const a=s.projects.find(p=>!p.archived);s.activeProjectId=a?a.id:null}
+  s.updatedAt=s.updatedAt||nowISO();
+  return s;
+}
+function freshState(){const p=makeProject('Новый проект');return{version:1,updatedAt:nowISO(),activeProjectId:p.id,projects:[p],pristine:true}}
+let state=normalizeState(lsGet(K_DATA))||freshState();
+let settings=lsGet(K_SET)||{};
+settings.pushed=settings.pushed||[];
+const ui={filter:new Set(),search:'',refocusCol:null,justAdded:new Set()};
+function saveSettings(){lsSet(K_SET,settings)}
+function proj(){return state.projects.find(p=>p.id===state.activeProjectId)||null}
+function colName(p,cid){return(p.colNames&&p.colNames[cid])||COLS.find(c=>c[0]===cid)[1]}
+function countCards(s){return s.projects.reduce((n,p)=>n+p.cards.length+p.weeks.reduce((m,w)=>m+w.cards.length,0),0)}
+function isPristine(s){return s.pristine||(s.projects.length<=1&&countCards(s)===0)}
+
+function commit(mut){
+  mut();
+  delete state.pristine;
+  state.updatedAt=nowISO();
+  if(!lsSet(K_DATA,state))toast('Не удалось сохранить на устройстве. Сделайте выгрузку JSON.');
+  settings.dirty=true;saveSettings();
+  render();
+  scheduleSync();
+}
+function snapshot(reason){
+  const list=lsGet(K_BAK)||[];
+  list.unshift({at:nowISO(),reason:reason,data:state});
+  while(list.length>10)list.pop();
+  if(!lsSet(K_BAK,list)){list.splice(3);lsSet(K_BAK,list)}
+}
+
+/* ---------- UI primitives ---------- */
+const modalStack=[];
+function openModal(o){
+  const wrap=document.createElement('div');wrap.className='modal-wrap';
+  wrap.innerHTML='<div class="modal '+(o.wide?'wide':'')+'" role="dialog" aria-modal="true" aria-label="'+esc(o.title)+'"><header class="modal-head"><h3>'+esc(o.title)+'</h3><button class="icon-btn" data-x aria-label="Закрыть">'+ic('x')+'</button></header><div class="modal-body"></div><footer class="modal-foot"></footer></div>';
+  const body=wrap.querySelector('.modal-body');
+  if(typeof o.body==='string')body.innerHTML=o.body;else if(o.body)body.append(o.body);
+  const foot=wrap.querySelector('.modal-foot');
+  const acts=o.actions||[];
+  if(!acts.length)foot.remove();
+  acts.forEach(a=>{const b=document.createElement('button');b.className='btn '+(a.kind||'');b.textContent=a.label;b.addEventListener('click',()=>a.onClick(close,b));foot.append(b)});
+  let closed=false;
+  const entry={close:()=>close()};
+  function close(silent){
+    if(closed)return;closed=true;
+    const i=modalStack.indexOf(entry);if(i>=0)modalStack.splice(i,1);
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)wrap.remove();
+    else{wrap.classList.add('closing');setTimeout(()=>wrap.remove(),170)}
+    if(!silent&&o.onClose)o.onClose();
+  }
+  modalStack.push(entry);
+  wrap.addEventListener('mousedown',e=>{if(e.target===wrap)close()});
+  wrap.querySelector('[data-x]').addEventListener('click',()=>close());
+  document.body.append(wrap);
+  setTimeout(()=>{const f=wrap.querySelector('[autofocus]')||wrap.querySelector('.modal-body input,.modal-body textarea,.modal-body select');if(f)f.focus()},0);
+  return{el:wrap,body:body,close:close};
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalStack.length){e.preventDefault();modalStack[modalStack.length-1].close()}});
+
+function askText(title,label,value){
+  return new Promise(res=>{
+    let done=false;
+    const m=openModal({title:title,body:'<label class="field"><span>'+esc(label)+'</span><input type="text" autofocus value="'+esc(value||'')+'"></label>',
+      actions:[{label:'Отмена',onClick:c=>c()},{label:'Сохранить',kind:'primary',onClick:c=>{done=true;const v=m.body.querySelector('input').value.trim();c(true);res(v||null)}}],
+      onClose:()=>{if(!done)res(null)}});
+    m.body.querySelector('input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();m.el.querySelector('.btn.primary').click()}});
+  });
+}
+function confirmBox(title,text,okLabel,danger){
+  return new Promise(res=>{
+    let done=false;
+    openModal({title:title,body:'<p>'+text+'</p>',actions:[{label:'Отмена',onClick:c=>c()},{label:okLabel,kind:danger?'primary':'primary',onClick:c=>{done=true;c(true);res(true)}}],onClose:()=>{if(!done)res(false)}});
+  });
+}
+function toast(msg,action,onAction,ms){
+  const t=document.createElement('div');t.className='toast';
+  const s=document.createElement('span');s.textContent=msg;t.append(s);
+  const hide=()=>{if(!t.isConnected||t.classList.contains('out'))return;t.classList.add('out');setTimeout(()=>t.remove(),220)};
+  if(action){const b=document.createElement('button');b.textContent=action;b.onclick=()=>{onAction();hide()};t.append(b)}
+  const box=document.getElementById('toasts');
+  while(box.children.length>=3)box.firstElementChild.remove();
+  box.append(t);
+  setTimeout(hide,ms||(action?7000:3500));
+}
+function download(name,content,type){
+  const blob=new Blob([content],{type:type});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+async function copyText(text){
+  try{await navigator.clipboard.writeText(text);return true}catch(e){
+    const ta=document.createElement('textarea');ta.value=text;document.body.append(ta);ta.select();
+    let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();return ok;
+  }
+}
+
+/* ---------- render ---------- */
+let sortables=[];
+function render(){
+  sortables.forEach(s=>s.destroy());sortables=[];
+  renderSidebar();renderMain();
+}
+function renderSidebar(){
+  const sb=document.getElementById('sidebar');
+  const active=state.projects.filter(p=>!p.archived);
+  const archived=state.projects.filter(p=>p.archived);
+  sb.innerHTML=
+    '<div class="side-head">Проекты</div>'+
+    '<nav class="projects">'+active.map(p=>{
+      const doing=p.cards.filter(c=>c.col==='doing').length, sprint=p.cards.filter(c=>c.col==='sprint').length;
+      return '<button class="proj-btn '+(p.id===state.activeProjectId?'on':'')+'" data-proj="'+p.id+'"><span class="avatar" style="--c:'+hashColor(p.id)+'">'+esc((p.name.trim()[0]||'•').toUpperCase())+'</span><span class="nm">'+esc(p.name)+'</span><span class="n" title="В спринте / в работе">'+sprint+' / '+doing+'</span></button>';
+    }).join('')+'</nav>'+
+    '<button class="btn ghost add-project" data-act="add-project">'+ic('plus')+'Новый проект</button>'+
+    (archived.length?'<details class="archived"><summary>Архив проектов ('+archived.length+')</summary><ul>'+archived.map(p=>'<li><span>'+esc(p.name)+'</span><button class="btn" data-unarchive="'+p.id+'">Вернуть</button></li>').join('')+'</ul></details>':'')+
+    '<div class="side-foot"><div class="sync" id="sync-status"><span class="dot"></span><span class="txt"></span></div>'+
+    '<button class="btn ghost" data-act="sync">'+ic('cloud')+'Синхронизация с GitHub</button>'+
+    '<button class="btn ghost" data-act="export">'+ic('down')+'Выгрузить задачи</button>'+
+    '<button class="btn ghost" data-act="import">'+ic('up')+'Загрузить задачи</button></div>';
+  paintSync();
+}
+function renderMain(){
+  const main=document.getElementById('main');
+  const scroll={board:(main.querySelector('.board')||{}).scrollLeft||0,lists:{}};
+  main.querySelectorAll('.list').forEach(l=>{scroll.lists[l.dataset.col]=l.scrollTop});
+  const sameProject=main.dataset.pid===state.activeProjectId;
+  main.dataset.pid=state.activeProjectId||'';
+  const p=proj();
+  if(!p){
+    main.innerHTML='<div class="topbar"><button class="icon-btn menu-toggle" data-act="menu" aria-label="Показать или скрыть проекты" title="Показать или скрыть проекты">'+ic('sidebar')+'</button></div><div class="empty"><h2>Нет активных проектов</h2><p class="muted">Создайте проект: у него будет своя доска с корзинами и продуктами.</p><button class="btn primary" data-act="add-project">Создать проект</button></div>';
+    return;
+  }
+  ui.filter.forEach(id=>{if(!p.labels.find(l=>l.id===id))ui.filter.delete(id)});
+  const q=ui.search.trim().toLowerCase();
+  const visible=c=>(ui.filter.size===0||c.labels.some(id=>ui.filter.has(id)))&&(!q||(c.title+' '+(c.desc||'')).toLowerCase().includes(q));
+  const labelById=Object.fromEntries(p.labels.map(l=>[l.id,l]));
+  const today=todayStr();
+  const cardHTML=c=>{
+    const ls=c.labels.map(id=>labelById[id]).filter(Boolean);
+    const doneN=c.checklist.filter(i=>i.done).length;
+    const cl=c.checklist.length?'<span class="'+(doneN===c.checklist.length?'full':'')+'">'+ic('list')+doneN+'/'+c.checklist.length+'</span>':'';
+    const due=c.due?'<span class="'+(c.due<today&&c.col!=='done'?'late':'')+'">'+ic('cal')+esc(fmtDue(c.due))+'</span>':'';
+    const desc=c.desc?'<span title="Есть описание">'+ic('text')+'</span>':'';
+    const enter=ui.justAdded.has(c.id)?'enter ':'';
+    return '<article class="card '+enter+(c.important?'important ':'')+(visible(c)?'':'hidden')+'" data-id="'+c.id+'" tabindex="0">'+
+      (ls.length?'<div class="card-labels">'+ls.map(l=>'<span class="tag" style="--c:'+l.color+'"><i></i>'+esc(l.name)+'</span>').join('')+'</div>':'')+
+      '<div class="card-title">'+(c.important?'<span class="flag" title="Важно">'+ic('flag')+'</span>':'')+esc(c.title)+'</div>'+((cl||due||desc)?'<div class="card-meta">'+due+cl+desc+'</div>':'')+'</article>';
+  };
+  main.innerHTML=
+    '<header class="topbar"><button class="icon-btn menu-toggle" data-act="menu" aria-label="Показать или скрыть проекты" title="Показать или скрыть проекты">'+ic('sidebar')+'</button>'+
+      '<h1 class="project-title" data-act="rename-project" title="Нажмите, чтобы переименовать">'+esc(p.name)+'</h1>'+
+      '<div class="top-actions"><button class="btn" data-act="labels" title="Продукты">'+ic('tag')+'<span class="lbl">Продукты</span></button><button class="btn" data-act="close-week" title="Закрыть неделю">'+ic('check')+'<span class="lbl">Закрыть неделю</span></button><button class="btn" data-act="weeks" title="Архив недель">'+ic('archive')+'<span class="lbl">Архив недель</span></button><button class="icon-btn" data-act="project-menu" aria-label="Действия с проектом" title="Действия с проектом">'+ic('dots')+'</button></div></header>'+
+    '<div class="filterbar">'+
+      (p.labels.length?p.labels.map(l=>'<button class="chip '+(ui.filter.has(l.id)?'on':'')+'" style="--c:'+l.color+'" data-filter="'+l.id+'"><i></i>'+esc(l.name)+'</button>').join(''):'<button class="btn" data-act="labels">'+ic('plus')+'Добавить продукты</button>')+
+      (ui.filter.size||q?'<button class="btn ghost" data-act="reset-filter">'+ic('reset')+'Сбросить</button>':'')+
+      '<label class="search-wrap">'+ic('search')+'<input class="search" type="search" placeholder="Поиск" value="'+esc(ui.search)+'" aria-label="Поиск по задачам"></label></div>'+
+    '<div class="board">'+COLS.map(([cid])=>{
+      const cards=p.cards.filter(c=>c.col===cid);
+      const over=cid==='doing'&&p.wipLimit>0&&cards.length>p.wipLimit;
+      return '<section class="col '+(over?'over':'')+'" data-col="'+cid+'"><header class="col-head"><span class="col-dot"></span><h2 data-rename-col="'+cid+'" title="Нажмите, чтобы переименовать">'+esc(colName(p,cid))+'</h2><span class="count">'+cards.length+(cid==='doing'&&p.wipLimit>0?' / '+p.wipLimit:'')+'</span></header>'+
+        '<div class="list" data-col="'+cid+'">'+cards.map(cardHTML).join('')+'</div>'+
+        '<div class="quick-add"><textarea rows="1" data-quick="'+cid+'" placeholder="+  Добавить задачу" aria-label="Добавить задачу в '+esc(colName(p,cid))+'"></textarea></div></section>';
+    }).join('')+'</div>';
+
+  if(window.Sortable){
+    main.querySelectorAll('.list').forEach(el=>{
+      sortables.push(new Sortable(el,{group:'cards',animation:200,easing:'cubic-bezier(.2,.8,.2,1)',delay:140,delayOnTouchOnly:true,
+        forceFallback:true,fallbackOnBody:true,fallbackTolerance:4,fallbackClass:'card-drag',ghostClass:'card-ghost',chosenClass:'card-chosen',
+        scroll:true,bubbleScroll:true,scrollSensitivity:80,scrollSpeed:12,
+        onStart:()=>document.body.classList.add('is-dragging'),
+        onEnd:e=>{document.body.classList.remove('is-dragging');onDragEnd(e)}}));
+    });
+  }else{
+    enableNativeDnD(main);
+  }
+  if(sameProject){const b=main.querySelector('.board');if(b)b.scrollLeft=scroll.board;main.querySelectorAll('.list').forEach(l=>{if(scroll.lists[l.dataset.col]!=null)l.scrollTop=scroll.lists[l.dataset.col]})}
+  if(ui.justAdded.size){const last=[...main.querySelectorAll('.card.enter')].pop();if(last&&last.scrollIntoView)last.scrollIntoView({block:'nearest'});ui.justAdded.clear()}
+  if(ui.refocusCol){const t=main.querySelector('[data-quick="'+ui.refocusCol+'"]');if(t)t.focus({preventScroll:true});ui.refocusCol=null}
+}
+function enableNativeDnD(root){
+  root.querySelectorAll('.card').forEach(c=>{c.draggable=true;c.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',c.dataset.id);e.dataTransfer.effectAllowed='move';setTimeout(()=>c.classList.add('card-ghost'),0)});c.addEventListener('dragend',()=>c.classList.remove('card-ghost'))});
+  root.querySelectorAll('.list').forEach(list=>{
+    list.addEventListener('dragenter',()=>list.classList.add('drop'));
+    list.addEventListener('dragleave',e=>{if(!list.contains(e.relatedTarget))list.classList.remove('drop')});
+    list.addEventListener('dragover',e=>{
+      e.preventDefault();
+      const dragging=root.querySelector('.card-ghost');if(!dragging)return;
+      const after=[...list.querySelectorAll('.card:not(.card-ghost)')].find(el=>{const r=el.getBoundingClientRect();return e.clientY<r.top+r.height/2});
+      if(after)list.insertBefore(dragging,after);else list.append(dragging);
+    });
+    list.addEventListener('drop',e=>{e.preventDefault();list.classList.remove('drop');onDragEnd({from:null,to:list,oldIndex:-1,newIndex:0})});
+  });
+}
+function onDragEnd(evt){
+  if(evt.from===evt.to&&evt.oldIndex===evt.newIndex)return;
+  const p=proj();const map=new Map(p.cards.map(c=>[c.id,c]));const next=[];
+  document.querySelectorAll('#main .list').forEach(l=>{
+    const col=l.dataset.col;
+    l.querySelectorAll('.card').forEach(el=>{
+      const c=map.get(el.dataset.id);if(!c)return;
+      if(c.col!==col){if(col==='done')c.doneAt=nowISO();else if(c.col==='done')c.doneAt=null;c.col=col}
+      next.push(c);map.delete(el.dataset.id);
+    });
+  });
+  map.forEach(c=>next.push(c));
+  commit(()=>{p.cards=next});
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-act],[data-proj],[data-unarchive],[data-filter],[data-rename-col],.card');
+  if(!t||t.closest('.modal-wrap'))return;
+  const sb=document.getElementById('sidebar');
+  if(t.dataset.proj){commitNav(()=>{state.activeProjectId=t.dataset.proj;ui.filter.clear();ui.search=''});sb.classList.remove('open');return}
+  if(t.dataset.unarchive){const p=state.projects.find(x=>x.id===t.dataset.unarchive);commit(()=>{p.archived=false;state.activeProjectId=p.id});return}
+  if(t.dataset.filter){const id=t.dataset.filter;ui.filter.has(id)?ui.filter.delete(id):ui.filter.add(id);render();return}
+  if(t.dataset.renameCol){const p=proj();const v=await askText('Название корзины','Название',colName(p,t.dataset.renameCol));if(v)commit(()=>{p.colNames[t.dataset.renameCol]=v});return}
+  if(t.classList.contains('card')){openCard(t.dataset.id);return}
+  const act=t.dataset.act;
+  if(act==='menu'){
+    if(window.matchMedia('(max-width:820px)').matches)sb.classList.toggle('open');
+    else{settings.sideCollapsed=!settings.sideCollapsed;saveSettings();applyLayout()}
+    return;
+  }
+  if(act==='add-project'){const v=await askText('Новый проект','Название проекта или клиента','');if(v){const p=makeProject(v);commit(()=>{state.projects.push(p);state.activeProjectId=p.id});sb.classList.remove('open');setTimeout(openLabels,50)}return}
+  if(act==='rename-project'){const p=proj();const v=await askText('Название проекта','Название',p.name);if(v)commit(()=>{p.name=v});return}
+  if(act==='labels')return openLabels();
+  if(act==='close-week')return openCloseWeek();
+  if(act==='weeks')return openWeeks();
+  if(act==='project-menu')return openProjectMenu();
+  if(act==='reset-filter'){ui.filter.clear();ui.search='';render();return}
+  if(act==='sync')return openSync();
+  if(act==='export')return openExport();
+  if(act==='import')return openImport();
+});
+document.addEventListener('mousedown',e=>{const sb=document.getElementById('sidebar');if(sb.classList.contains('open')&&!e.target.closest('#sidebar')&&!e.target.closest('[data-act="menu"]')&&!e.target.closest('.modal-wrap'))sb.classList.remove('open')});
+document.addEventListener('keydown',e=>{
+  const t=e.target;
+  if(t.matches&&t.matches('.card')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openCard(t.dataset.id)}
+  if(t.matches&&t.matches('[data-quick]')&&e.key==='Enter'&&!e.shiftKey){
+    e.preventDefault();
+    const lines=t.value.split('\n').map(s=>s.replace(/^\s*(\[\s?\]|[-*•]|\d+[.)])\s*/,'').trim()).filter(Boolean);
+    if(!lines.length)return;
+    const p=proj();const col=t.dataset.quick;
+    ui.refocusCol=col;
+    commit(()=>{lines.forEach(l=>{const c=normalizeCard({title:l,col:col,labels:[...ui.filter],doneAt:col==='done'?nowISO():null});ui.justAdded.add(c.id);p.cards.push(c)})});
+  }
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.matches('.search')){ui.search=t.value;const pos=t.selectionStart;render();const s=document.querySelector('.search');if(s){s.focus();s.setSelectionRange(pos,pos)}}
+  if(t.matches('[data-quick]')){t.style.height='auto';t.style.height=Math.min(t.scrollHeight,160)+'px'}
+});
+function commitNav(fn){fn();lsSet(K_DATA,state);render()}
+
+/* ---------- card modal ---------- */
+function findCard(id){for(const p of state.projects){const c=p.cards.find(x=>x.id===id);if(c)return{p:p,c:c}}return null}
+function openCard(id){
+  const f=findCard(id);if(!f)return;
+  const p=f.p;const d=clone(f.c);let deleted=false;
+  const body=document.createElement('div');
+  function draw(){
+    body.innerHTML=
+      '<label class="field"><span>Задача</span><textarea class="title-input" rows="2" data-f="title" autofocus>'+esc(d.title)+'</textarea></label>'+
+      '<div class="field-row"><label class="field"><span>Корзина</span><select data-f="col">'+COLS.map(([c])=>'<option value="'+c+'" '+(d.col===c?'selected':'')+'>'+esc(colName(p,c))+'</option>').join('')+'</select></label>'+
+      '<label class="field"><span>Срок</span><input type="date" data-f="due" value="'+esc(d.due||'')+'"></label>'+
+      '<label class="check"><input type="checkbox" data-f="important" '+(d.important?'checked':'')+'> Важно</label></div>'+
+      '<div class="field"><span>Продукты</span><div class="label-picker">'+(p.labels.length?p.labels.map(l=>'<label class="lp '+(d.labels.includes(l.id)?'on':'')+'" style="--c:'+l.color+'"><input type="checkbox" data-label="'+l.id+'" '+(d.labels.includes(l.id)?'checked':'')+'><i></i>'+esc(l.name)+'</label>').join(''):'<span class="muted small">Продуктов пока нет. Добавьте их через кнопку «Продукты».</span>')+'</div></div>'+
+      '<label class="field"><span>Описание</span><textarea rows="4" data-f="desc">'+esc(d.desc||'')+'</textarea></label>'+
+      '<div class="field"><span>Чек-лист</span><ul class="checklist">'+d.checklist.map((it,i)=>'<li><input type="checkbox" data-ci="'+i+'" '+(it.done?'checked':'')+' aria-label="Выполнено"><input type="text" data-ct="'+i+'" value="'+esc(it.text)+'"><button class="icon-btn" data-cdel="'+i+'" aria-label="Удалить пункт">'+ic('x')+'</button></li>').join('')+'</ul><input type="text" class="ci-add" placeholder="Новый пункт, затем Enter"></div>'+
+      '<p class="muted small">Создана '+fmtDateTime(d.createdAt)+(d.doneAt?', выполнена '+fmtDateTime(d.doneAt):'')+'</p>';
+  }
+  draw();
+  body.addEventListener('input',e=>{
+    const t=e.target;
+    if(t.dataset.f==='title'||t.dataset.f==='desc')d[t.dataset.f]=t.value;
+    if(t.dataset.ct!=null)d.checklist[+t.dataset.ct].text=t.value;
+  });
+  body.addEventListener('change',e=>{
+    const t=e.target;
+    if(t.dataset.f==='col')d.col=t.value;
+    if(t.dataset.f==='due')d.due=t.value||null;
+    if(t.dataset.f==='important')d.important=t.checked;
+    if(t.dataset.label){const i=d.labels.indexOf(t.dataset.label);if(t.checked&&i<0)d.labels.push(t.dataset.label);if(!t.checked&&i>=0)d.labels.splice(i,1);t.closest('.lp').classList.toggle('on',t.checked)}
+    if(t.dataset.ci!=null)d.checklist[+t.dataset.ci].done=t.checked;
+  });
+  body.addEventListener('click',e=>{const b=e.target.closest('[data-cdel]');if(b){d.checklist.splice(+b.dataset.cdel,1);draw()}});
+  body.addEventListener('keydown',e=>{
+    if(e.target.matches('.ci-add')&&e.key==='Enter'){e.preventDefault();const v=e.target.value.trim();if(v){d.checklist.push({text:v,done:false});draw();body.querySelector('.ci-add').focus()}}
+  });
+  openModal({title:'Задача',body:body,wide:true,
+    actions:[{label:'Удалить задачу',kind:'danger',onClick:c=>{deleted=true;c(true);deleteCard(id)}},{label:'Готово',kind:'primary',onClick:c=>c()}],
+    onClose:()=>{
+      if(deleted)return;
+      const cur=findCard(id);if(!cur)return;
+      d.title=(d.title||'').trim()||cur.c.title;
+      d.checklist=d.checklist.filter(i=>i.text.trim());
+      if(JSON.stringify(cur.c)===JSON.stringify(d))return;
+      commit(()=>{
+        const colChanged=d.col!==cur.c.col;
+        if(colChanged)d.doneAt=d.col==='done'?(cur.c.doneAt||nowISO()):null;
+        Object.assign(cur.c,d);
+        if(colChanged){const arr=cur.p.cards;arr.splice(arr.indexOf(cur.c),1);arr.push(cur.c)}
+      });
+    }});
+}
+function deleteCard(id){
+  const f=findCard(id);if(!f)return;
+  const idx=f.p.cards.indexOf(f.c);const card=f.c;const pid=f.p.id;
+  commit(()=>{f.p.cards.splice(idx,1)});
+  toast('Задача удалена','Отменить',()=>{const p=state.projects.find(x=>x.id===pid);if(p&&!p.cards.find(c=>c.id===card.id))commit(()=>{p.cards.splice(Math.min(idx,p.cards.length),0,card)})});
+}
+
+/* ---------- labels (products) ---------- */
+function openLabels(){
+  const first=proj();if(!first)return;
+  const pid=first.id;
+  const P=()=>state.projects.find(x=>x.id===pid);
+  const body=document.createElement('div');
+  let newColor=null;
+  function nextColor(p){const used=new Set(p.labels.map(x=>x.color));return PALETTE.find(c=>!used.has(c))||PALETTE[p.labels.length%PALETTE.length]}
+  function saveNames(){
+    const p=P();if(!p)return;
+    const changes=[];
+    body.querySelectorAll('li[data-id]').forEach(li=>{const l=p.labels.find(x=>x.id===li.dataset.id);const v=li.querySelector('[data-name]').value.trim();if(l&&v&&v!==l.name)changes.push([l,v])});
+    if(changes.length)commit(()=>{changes.forEach(([l,v])=>{l.name=v})});
+  }
+  function addLabel(){
+    const p=P();if(!p)return;
+    const inp=body.querySelector('[data-new-name]');const v=inp.value.trim();
+    if(!v){inp.focus();toast('Введите название продукта');return}
+    saveNames();
+    commit(()=>{P().labels.push({id:uid(),name:v,color:newColor||nextColor(P())})});
+    newColor=null;draw();body.querySelector('[data-new-name]').focus();
+    toast('Продукт «'+v+'» добавлен');
+  }
+  function draw(){
+    const p=P();if(!p){body.innerHTML='<p>Проект не найден.</p>';return}
+    const nc=newColor||nextColor(p);
+    body.innerHTML='<p class="muted small">Продукт — цветная метка внутри проекта. У задачи может быть несколько продуктов. Удаление продукта снимает метку, но не удаляет задачи.</p>'+
+      '<div class="new-label"><label class="field"><span>Новый продукт</span><input type="text" data-new-name placeholder="Например, Трекеры" autofocus></label>'+
+      '<div class="swatches">'+PALETTE.map(c=>'<button class="sw '+(c===nc?'on':'')+'" style="--c:'+c+'" data-new-color="'+c+'" aria-label="Цвет '+c+'"></button>').join('')+'</div>'+
+      '<button class="btn primary" data-add>Добавить продукт</button></div>'+
+      (p.labels.length?'<h4 style="margin:18px 0 0">Продукты проекта ('+p.labels.length+')</h4>':'')+
+      '<ul class="label-list">'+p.labels.map(l=>{
+        const n=p.cards.filter(c=>c.labels.includes(l.id)).length;
+        return '<li data-id="'+l.id+'"><input type="text" value="'+esc(l.name)+'" data-name aria-label="Название продукта"><span class="muted small">'+n+' '+plural(n,'задача','задачи','задач')+'</span><button class="icon-btn" data-del aria-label="Удалить продукт">'+ic('x')+'</button>'+
+          '<div class="swatches">'+PALETTE.map(c=>'<button class="sw '+(c===l.color?'on':'')+'" style="--c:'+c+'" data-color="'+c+'" aria-label="Цвет '+c+'"></button>').join('')+'</div></li>';
+      }).join('')+'</ul>';
+  }
+  draw();
+  body.addEventListener('click',async e=>{
+    const p=P();if(!p)return;
+    const nc=e.target.closest('[data-new-color]');
+    if(nc){newColor=nc.dataset.newColor;const typed=body.querySelector('[data-new-name]').value;saveNames();draw();const i=body.querySelector('[data-new-name]');i.value=typed;i.focus();return}
+    if(e.target.closest('[data-add]')){addLabel();return}
+    const li=e.target.closest('li[data-id]');const l=li&&p.labels.find(x=>x.id===li.dataset.id);if(!l)return;
+    if(e.target.closest('[data-color]')){saveNames();commit(()=>{l.color=e.target.closest('[data-color]').dataset.color});draw();return}
+    if(e.target.closest('[data-del]')){
+      const n=p.cards.filter(c=>c.labels.includes(l.id)).length;
+      if(n&&!(await confirmBox('Удалить продукт','Метка «'+esc(l.name)+'» снимется с '+n+' '+plural(n,'задачи','задач','задач')+'. Сами задачи останутся.','Удалить продукт')))return;
+      saveNames();
+      commit(()=>{const q=P();q.labels=q.labels.filter(x=>x.id!==l.id);q.cards.forEach(c=>{c.labels=c.labels.filter(x=>x!==l.id)});q.weeks.forEach(w=>w.cards.forEach(c=>{c.labels=c.labels.filter(x=>x!==l.id)}))});draw();
+    }
+  });
+  body.addEventListener('change',e=>{if(e.target.matches('[data-name]'))saveNames()});
+  body.addEventListener('keydown',e=>{
+    if(e.key!=='Enter')return;
+    if(e.target.matches('[data-new-name]')){e.preventDefault();addLabel()}
+    else if(e.target.matches('[data-name]')){e.preventDefault();saveNames()}
+  });
+  openModal({title:'Продукты проекта',body:body,actions:[{label:'Готово',kind:'primary',onClick:c=>c()}],
+    onClose:()=>{
+      saveNames();
+      const v=body.querySelector('[data-new-name]');
+      if(v&&v.value.trim()){const p=P();const name=v.value.trim();if(p&&!p.labels.some(l=>l.name===name)){commit(()=>{P().labels.push({id:uid(),name:name,color:newColor||nextColor(P())})});toast('Продукт «'+name+'» добавлен')}}
+    }});
+}
+
+/* ---------- week close & archive ---------- */
+function openCloseWeek(){
+  const p=proj();if(!p)return;
+  const done=p.cards.filter(c=>c.col==='done');
+  const sprint=p.cards.filter(c=>c.col==='sprint').length, doing=p.cards.filter(c=>c.col==='doing').length;
+  const byLabel=p.labels.map(l=>[l,done.filter(c=>c.labels.includes(l.id)).length]).filter(x=>x[1]>0);
+  const noLabel=done.filter(c=>!c.labels.length).length;
+  const body='<p>Закрытие недели убирает из доски только выполненное: задачи из «'+esc(colName(p,'done'))+'» уходят в архив недель, где их можно посмотреть и вернуть. Спринт и «В работе» остаются как есть.</p>'+
+    (done.length?'':'<p><strong>В «'+esc(colName(p,'done'))+'» пока пусто.</strong> Сначала перетащите туда выполненные задачи.</p>')+
+    '<div class="kv"><strong>'+done.length+'</strong><span>'+plural(done.length,'задача выполнена','задачи выполнены','задач выполнено')+'</span>'+
+    byLabel.map(([l,n])=>'<strong style="color:'+l.color+'">'+n+'</strong><span>'+esc(l.name)+'</span>').join('')+(noLabel?'<strong>'+noLabel+'</strong><span>без продукта</span>':'')+'</div>'+
+    '<p class="muted small">Остаётся: в спринте '+sprint+', в работе '+doing+'.</p>'+
+    '<label class="check"><input type="checkbox" id="back-to-backlog"> Вернуть незавершённое из «'+esc(colName(p,'sprint'))+'» в «'+esc(colName(p,'backlog'))+'»</label>';
+  openModal({title:'Закрыть неделю',body:body,actions:[{label:'Отмена',onClick:c=>c()},{label:'Закрыть неделю',kind:'primary',onClick:c=>{
+    const back=document.getElementById('back-to-backlog').checked;
+    const q=state.projects.find(x=>x.id===p.id);if(!q){c();return}
+    const doneNow=q.cards.filter(x=>x.col==='done');
+    if(!doneNow.length&&!back){c();toast('В «Готово» пока пусто, закрывать нечего');return}
+    snapshot('Перед закрытием недели');
+    c();
+    commit(()=>{
+      if(doneNow.length)q.weeks.unshift({id:uid(),closedAt:nowISO(),cards:doneNow});
+      q.cards=q.cards.filter(x=>x.col!=='done');
+      if(back)q.cards.forEach(x=>{if(x.col==='sprint')x.col='backlog'});
+    });
+    toast(doneNow.length?'Неделя закрыта: '+doneNow.length+' '+plural(doneNow.length,'задача','задачи','задач')+' в архиве':'Незавершённое возвращено в бэклог');
+  }}]});
+}
+function openWeeks(){
+  let p=proj();if(!p)return;
+  const body=document.createElement('div');
+  function draw(){
+    const lab=id=>p.labels.find(l=>l.id===id);
+    body.innerHTML=p.weeks.length?p.weeks.map(w=>'<details class="week" data-w="'+w.id+'"><summary>Неделя закрыта '+fmtDate(w.closedAt)+': '+w.cards.length+' '+plural(w.cards.length,'задача','задачи','задач')+'</summary><ul>'+
+      w.cards.map(c=>'<li><span>'+esc(c.title)+' '+c.labels.map(lab).filter(Boolean).map(l=>'<span class="small" style="color:'+l.color+'">'+esc(l.name)+'</span>').join(' ')+'</span><button class="btn" data-restore="'+c.id+'">Вернуть</button></li>').join('')+'</ul></details>').join(''):'<p class="muted">Архив пуст. Он пополняется кнопкой «Закрыть неделю».</p>';
+  }
+  draw();
+  body.addEventListener('click',e=>{
+    const b=e.target.closest('[data-restore]');if(!b)return;
+    const q=state.projects.find(x=>x.id===p.id);if(!q)return;
+    const wEl=b.closest('[data-w]');const w=q.weeks.find(x=>x.id===wEl.dataset.w);if(!w)return;const c=w.cards.find(x=>x.id===b.dataset.restore);if(!c)return;
+    commit(()=>{w.cards.splice(w.cards.indexOf(c),1);c.col='done';q.cards.push(c);if(!w.cards.length)q.weeks.splice(q.weeks.indexOf(w),1)});p=q;
+    draw();toast('Задача возвращена в «'+colName(p,'done')+'»');
+  });
+  openModal({title:'Архив недель',body:body,wide:true,actions:[{label:'Закрыть',kind:'primary',onClick:c=>c()}]});
+}
+
+/* ---------- project menu ---------- */
+function openProjectMenu(){
+  const p=proj();if(!p)return;
+  const body='<div class="stack"><button class="btn ghost" data-m="rename">Переименовать проект</button><button class="btn ghost" data-m="wip">Лимит задач «В работе»: '+(p.wipLimit||'нет')+'</button><button class="btn ghost" data-m="archive">Архивировать проект</button><button class="btn ghost" data-m="delete" style="color:var(--danger)">Удалить проект</button></div>';
+  const m=openModal({title:p.name,body:body});
+  m.body.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-m]');if(!b)return;m.close();
+    const k=b.dataset.m;
+    if(k==='rename'){const v=await askText('Название проекта','Название',p.name);if(v)commit(()=>{p.name=v})}
+    if(k==='wip'){const v=await askText('Лимит «В работе»','Сколько задач одновременно (0 — без лимита)',String(p.wipLimit||0));if(v!==null){const n=Math.max(0,parseInt(v,10)||0);commit(()=>{p.wipLimit=n})}}
+    if(k==='archive'){if(await confirmBox('Архивировать проект','Проект «'+esc(p.name)+'» скроется из списка. Вернуть его можно из «Архива проектов» в боковой панели.','Архивировать'))commit(()=>{p.archived=true;const a=state.projects.find(x=>!x.archived);state.activeProjectId=a?a.id:null})}
+    if(k==='delete'){const n=p.cards.length+p.weeks.reduce((s,w)=>s+w.cards.length,0);
+      if(await confirmBox('Удалить проект','Проект «'+esc(p.name)+'» и '+n+' '+plural(n,'задача','задачи','задач')+' будут удалены. Перед удалением сохранится резервная копия на этом устройстве, а в gist останется история версий.','Удалить проект',true)){
+        snapshot('Перед удалением проекта «'+p.name+'»');
+        commit(()=>{state.projects.splice(state.projects.indexOf(p),1);const a=state.projects.find(x=>!x.archived);state.activeProjectId=a?a.id:null});
+      }}
+  });
+}
+
+/* ---------- export ---------- */
+function collectRows(scope,withArchive){
+  const ps=scope==='all'?state.projects:[proj()].filter(Boolean);
+  const rows=[];
+  ps.forEach(p=>{
+    const lab=id=>{const l=p.labels.find(x=>x.id===id);return l?l.name:''};
+    const row=(c,col)=>({title:c.title,project:p.name+(p.archived?' (архив)':''),col:col,labels:c.labels.map(lab).filter(Boolean).join(', '),due:c.due||'',important:c.important?'да':'',desc:c.desc||'',checklist:c.checklist.map(i=>(i.done?'[x] ':'[ ] ')+i.text).join('; '),created:fmtDate(c.createdAt),done:fmtDate(c.doneAt)});
+    COLS.forEach(([cid])=>p.cards.filter(c=>c.col===cid).forEach(c=>rows.push(row(c,colName(p,cid)))));
+    if(withArchive)p.weeks.forEach(w=>w.cards.forEach(c=>rows.push(row(c,'Архив недели '+fmtDate(w.closedAt)))));
+  });
+  return rows;
+}
+const HEAD=[['title','Задача'],['project','Проект'],['col','Корзина'],['labels','Продукты'],['due','Срок'],['important','Важно'],['desc','Описание'],['checklist','Чек-лист'],['created','Создана'],['done','Выполнена']];
+function toCSV(rows){const q=v=>'"'+String(v).replace(/"/g,'""')+'"';return '\ufeff'+[HEAD.map(h=>q(h[1])).join(';')].concat(rows.map(r=>HEAD.map(h=>q(r[h[0]])).join(';'))).join('\r\n')}
+function toTSV(rows){const c=v=>String(v).replace(/[\t\r\n]+/g,' ');return [HEAD.map(h=>h[1]).join('\t')].concat(rows.map(r=>HEAD.map(h=>c(r[h[0]])).join('\t'))).join('\n')}
+function toTXT(rows){
+  let out='',lp=null,lc=null;
+  rows.forEach(r=>{
+    if(r.project!==lp){out+=(out?'\n':'')+r.project+'\n'+'='.repeat(Math.min(r.project.length,60))+'\n';lp=r.project;lc=null}
+    if(r.col!==lc){out+='\n'+r.col+'\n';lc=r.col}
+    out+='- '+r.title.replace(/\n/g,' ')+(r.labels?' ['+r.labels+']':'')+(r.due?' (до '+r.due+')':'')+'\n';
+  });
+  return out||'Задач нет\n';
+}
+function openExport(){
+  const body='<div class="section"><h4>Что выгрузить</h4>'+
+    '<label class="radio"><input type="radio" name="scope" value="current" checked> Текущий проект</label>'+
+    '<label class="radio"><input type="radio" name="scope" value="all"> Все проекты</label>'+
+    '<label class="check" style="margin:8px 0 0"><input type="checkbox" id="with-archive"> Включить архив недель</label></div>'+
+    '<div class="section"><h4>Таблица и текст</h4><div class="stack">'+
+    '<button class="btn" data-x-fmt="csv">Скачать таблицу CSV (открывается в Excel)</button>'+
+    '<button class="btn" data-x-fmt="tsv">Скопировать таблицу для Google Таблиц или Excel</button>'+
+    '<button class="btn" data-x-fmt="txt">Скачать текстовый список TXT</button></div></div>'+
+    '<div class="section"><h4>Полная резервная копия</h4><p class="muted small">Все проекты, продукты, архивы и настройки колонок. Этот файл можно загрузить обратно.</p><button class="btn" data-x-fmt="json">Скачать резервную копию JSON</button></div>';
+  const m=openModal({title:'Выгрузить задачи',body:body});
+  m.body.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-x-fmt]');if(!b)return;
+    const scope=m.body.querySelector('input[name=scope]:checked').value;
+    const arch=m.body.querySelector('#with-archive').checked;
+    const stamp=todayStr();
+    const rows=collectRows(scope,arch);
+    const base=scope==='all'?'все-проекты':(proj()?proj().name:'проект').replace(/[\\/:*?"<>|]+/g,'_');
+    if(b.dataset.xFmt==='csv')download(base+'-'+stamp+'.csv',toCSV(rows),'text/csv;charset=utf-8');
+    if(b.dataset.xFmt==='txt')download(base+'-'+stamp+'.txt',toTXT(rows),'text/plain;charset=utf-8');
+    if(b.dataset.xFmt==='tsv')toast(await copyText(toTSV(rows))?'Таблица скопирована: вставьте её в ячейку A1':'Не удалось скопировать. Используйте CSV.');
+    if(b.dataset.xFmt==='json')download('kanban-backup-'+stamp+'.json',JSON.stringify(state,null,2),'application/json');
+  });
+}
+
+/* ---------- import ---------- */
+function mergeProjects(incoming){
+  let added=0;
+  if(isPristine(state)||(state.projects.length===1&&state.projects[0].cards.length===0&&state.projects[0].labels.length===0&&state.projects[0].weeks.length===0&&state.projects[0].name==='Новый проект'))state.projects=[];
+  incoming.projects.forEach(ip=>{
+    let target=state.projects.find(p=>!p.archived&&p.name.trim().toLowerCase()===String(ip.name||'').trim().toLowerCase());
+    if(!target){target=makeProject(ip.name||'Импорт');target.colNames=ip.colNames||{};if(ip.wipLimit!=null)target.wipLimit=ip.wipLimit;state.projects.push(target)}
+    const map={};
+    (ip.labels||[]).forEach(l=>{
+      let ex=target.labels.find(x=>x.name.trim().toLowerCase()===String(l.name||'').trim().toLowerCase());
+      if(!ex){ex={id:uid(),name:l.name||'Продукт',color:l.color||PALETTE[target.labels.length%PALETTE.length]};target.labels.push(ex)}
+      map[l.id]=ex.id;
+    });
+    const conv=c=>{const n=normalizeCard(clone(c));n.id=uid();n.labels=n.labels.map(id=>map[id]).filter(Boolean);return n};
+    (ip.cards||[]).forEach(c=>{target.cards.push(conv(c));added++});
+    (ip.weeks||[]).forEach(w=>{target.weeks.push({id:uid(),closedAt:w.closedAt||nowISO(),cards:(w.cards||[]).map(conv)})});
+    state.activeProjectId=target.id;
+  });
+  return added;
+}
+function openImport(){
+  const p=proj();
+  const body='<div class="section"><h4>Файл JSON</h4><p class="muted small">Резервная копия или подготовленный файл с задачами.</p>'+
+    '<input type="file" accept=".json,application/json" id="imp-file">'+
+    '<label class="radio"><input type="radio" name="imp-mode" value="merge" checked> Добавить к текущим данным (проекты и продукты совпадут по названию)</label>'+
+    '<label class="radio"><input type="radio" name="imp-mode" value="replace"> Заменить все данные</label>'+
+    '<button class="btn primary" id="imp-go" style="margin-top:8px">Загрузить файл</button></div>'+
+    (p?'<div class="section"><h4>Список задач текстом</h4><p class="muted small">Одна строка — одна задача. Они попадут в проект «'+esc(p.name)+'».</p>'+
+    '<label class="field"><textarea rows="6" id="imp-text" placeholder="Первая задача&#10;Вторая задача"></textarea></label>'+
+    '<div class="field-row"><label class="field"><span>Корзина</span><select id="imp-col">'+COLS.map(([c])=>'<option value="'+c+'">'+esc(colName(p,c))+'</option>').join('')+'</select></label>'+
+    '<label class="field"><span>Продукт</span><select id="imp-label"><option value="">Без продукта</option>'+p.labels.map(l=>'<option value="'+l.id+'">'+esc(l.name)+'</option>').join('')+'</select></label></div>'+
+    '<button class="btn primary" id="imp-text-go">Добавить задачи</button></div>':'');
+  const m=openModal({title:'Загрузить задачи',body:body,wide:true});
+  m.body.querySelector('#imp-go').addEventListener('click',async()=>{
+    const file=m.body.querySelector('#imp-file').files[0];if(!file){toast('Выберите файл JSON');return}
+    let data;try{data=JSON.parse(await file.text())}catch(e){toast('Файл не читается как JSON');return}
+    if(!data||!Array.isArray(data.projects)){toast('В файле нет списка проектов');return}
+    const mode=m.body.querySelector('input[name=imp-mode]:checked').value;
+    if(mode==='replace'){
+      if(!(await confirmBox('Заменить все данные','Текущие данные заменятся содержимым файла. Резервная копия сохранится на этом устройстве.','Заменить',true)))return;
+      snapshot('Перед заменой из файла');const ns=normalizeState(clone(data));
+      m.close();commit(()=>{state=ns});toast('Данные загружены');
+    }else{
+      snapshot('Перед добавлением из файла');let n=0;
+      m.close();commit(()=>{n=mergeProjects(data)});toast('Добавлено задач: '+n);
+    }
+  });
+  const tg=m.body.querySelector('#imp-text-go');
+  if(tg)tg.addEventListener('click',()=>{
+    const lines=m.body.querySelector('#imp-text').value.split('\n').map(s=>s.replace(/^\s*(\[\s?\]|[-*•]|\d+[.)])\s*/,'').trim()).filter(Boolean);
+    if(!lines.length){toast('Список пуст');return}
+    const col=m.body.querySelector('#imp-col').value, lab=m.body.querySelector('#imp-label').value;
+    m.close();commit(()=>{lines.forEach(t=>p.cards.push(normalizeCard({title:t,col:col,labels:lab?[lab]:[]})))});
+    toast('Добавлено задач: '+lines.length);
+  });
+}
+
+/* ---------- GitHub Gist sync ---------- */
+let syncTimer=null, syncing=false, syncQueued=false, conflictOpen=false;
+let syncStatus={kind:'off',text:'Синхронизация выключена. Данные только на этом устройстве.'};
+const syncEnabled=()=>!!(settings.token&&settings.gistId);
+function setSync(kind,text){syncStatus={kind:kind,text:text};paintSync()}
+function paintSync(){const el=document.getElementById('sync-status');if(!el)return;el.dataset.kind=syncStatus.kind;el.querySelector('.txt').textContent=syncStatus.text}
+function markOk(){setSync('ok','Сохранено на GitHub в '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}))}
+async function gh(method,path,body){
+  const r=await fetch('https://api.github.com'+path,{method:method,cache:'no-store',headers:Object.assign({'Authorization':'Bearer '+settings.token,'Accept':'application/vnd.github+json'},body?{'Content-Type':'application/json'}:{}),body:body?JSON.stringify(body):undefined});
+  if(!r.ok){let msg='';try{msg=(await r.json()).message||''}catch(_){}const err=new Error(r.status+' '+msg);err.status=r.status;throw err}
+  return r.json();
+}
+async function fetchRemote(){
+  const g=await gh('GET','/gists/'+encodeURIComponent(settings.gistId));
+  const f=g.files&&g.files[GIST_FILE];if(!f)return null;
+  let content=f.content;
+  if(f.truncated){const r=await fetch(f.raw_url,{cache:'no-store'});content=await r.text()}
+  const data=JSON.parse(content);
+  return normalizeState(data);
+}
+function rememberPushed(at){settings.pushed.unshift(at);settings.pushed=settings.pushed.slice(0,30)}
+function syncError(e){
+  if(e.status===401)setSync('error','GitHub не принял токен. Проверьте его в настройках синхронизации.');
+  else if(e.status===403)setSync('error','GitHub отказал в доступе: у токена нет права gist или превышен лимит запросов.');
+  else if(e.status===404)setSync('error','Gist не найден. Проверьте ID в настройках синхронизации.');
+  else if(!navigator.onLine||e instanceof TypeError)setSync('offline','Нет связи с GitHub. Изменения сохранены на устройстве и отправятся позже.');
+  else setSync('error','Ошибка синхронизации: '+e.message);
+}
+function scheduleSync(){
+  if(!syncEnabled())return;
+  clearTimeout(syncTimer);
+  setSync('pending','Есть несохранённые на GitHub изменения');
+  syncTimer=setTimeout(()=>pushSync(false),1500);
+}
+async function pushSync(force){
+  if(!syncEnabled())return;
+  if(syncing){syncQueued=true;return}
+  syncing=true;setSync('saving','Сохраняю на GitHub…');
+  let conflictRemote=null, ok=false;
+  try{
+    if(!force){
+      const remote=await fetchRemote();
+      if(remote&&settings.lastRemoteUpdatedAt&&remote.updatedAt!==settings.lastRemoteUpdatedAt&&remote.updatedAt!==state.updatedAt&&!settings.pushed.includes(remote.updatedAt))conflictRemote=remote;
+    }
+    if(!conflictRemote){
+      const sentAt=state.updatedAt;
+      await gh('PATCH','/gists/'+encodeURIComponent(settings.gistId),{files:{[GIST_FILE]:{content:JSON.stringify(state)}}});
+      settings.lastRemoteUpdatedAt=sentAt;rememberPushed(sentAt);
+      if(state.updatedAt===sentAt)settings.dirty=false;
+      settings.lastSyncAt=nowISO();saveSettings();markOk();ok=true;
+    }
+  }catch(e){syncError(e)}
+  finally{syncing=false}
+  if(conflictRemote){showChoice(conflictRemote,'conflict');return}
+  if(ok&&(syncQueued||settings.dirty)){syncQueued=false;if(settings.dirty)scheduleSync()}
+}
+async function pullSync(){
+  if(!syncEnabled()||syncing||conflictOpen)return;
+  syncing=true;setSync('saving','Проверяю GitHub…');
+  let next=null;
+  try{
+    const remote=await fetchRemote();
+    if(!remote)next='push';
+    else if(remote.updatedAt===state.updatedAt){settings.lastRemoteUpdatedAt=remote.updatedAt;settings.dirty=false;saveSettings();markOk()}
+    else if(!settings.dirty||isPristine(state))adoptRemote(remote);
+    else if(remote.updatedAt===settings.lastRemoteUpdatedAt||settings.pushed.includes(remote.updatedAt))next='push';
+    else next={conflict:remote};
+  }catch(e){syncError(e)}
+  finally{syncing=false}
+  if(next==='push')pushSync(true);
+  else if(next&&next.conflict)showChoice(next.conflict,'conflict');
+}
+function adoptRemote(remote){
+  if(!isPristine(state))snapshot('Перед загрузкой версии с GitHub');
+  state=remote;lsSet(K_DATA,state);
+  settings.lastRemoteUpdatedAt=state.updatedAt;settings.dirty=false;settings.lastSyncAt=nowISO();saveSettings();
+  render();markOk();
+}
+function summary(s){const n=countCards(s);return s.projects.length+' '+plural(s.projects.length,'проект','проекта','проектов')+', '+n+' '+plural(n,'задача','задачи','задач')+', изменено '+fmtDateTime(s.updatedAt)}
+function showChoice(remote,mode){
+  if(conflictOpen)return;conflictOpen=true;
+  setSync('conflict','Версии на GitHub и на устройстве разошлись. Выберите, какую оставить.');
+  const text=mode==='connect'
+    ?'В этом gist уже есть данные. Выберите, какую версию оставить.'
+    :'Пока здесь были несохранённые изменения, на GitHub появилась другая версия (скорее всего, с другого устройства). Выберите, какую оставить. Вторую можно сначала скачать.';
+  const body='<p>'+text+'</p><div class="kv"><strong>GitHub</strong><span>'+esc(summary(remote))+'</span><strong>Это устройство</strong><span>'+esc(summary(state))+'</span></div>';
+  openModal({title:'Какую версию оставить',body:body,wide:true,actions:[
+    {label:'Скачать обе копии',onClick:()=>{const st=todayStr();download('kanban-github-'+st+'.json',JSON.stringify(remote,null,2),'application/json');download('kanban-device-'+st+'.json',JSON.stringify(state,null,2),'application/json')}},
+    {label:'Оставить версию этого устройства',onClick:c=>{conflictOpen=false;c(true);settings.lastRemoteUpdatedAt=remote.updatedAt;saveSettings();pushSync(true)}},
+    {label:'Взять версию с GitHub',kind:'primary',onClick:c=>{conflictOpen=false;c(true);adoptRemote(remote)}}
+  ],onClose:()=>{conflictOpen=false;setSync('conflict','Выбор версии отложен. Синхронизация на паузе до выбора.')}});
+}
+function openSync(){
+  const body=document.createElement('div');
+  function draw(){
+    if(syncEnabled()){
+      body.innerHTML='<p>Синхронизация включена. Каждое изменение через пару секунд сохраняется в ваш секретный gist, а при открытии на другом устройстве подтягивается оттуда.</p>'+
+        '<div class="kv"><strong>Gist</strong><span><a href="https://gist.github.com/'+esc(settings.gistId)+'" target="_blank" rel="noopener">'+esc(settings.gistId)+'</a></span><strong>Последнее сохранение</strong><span>'+(settings.lastSyncAt?fmtDateTime(settings.lastSyncAt):'пока не было')+'</span></div>'+
+        '<p class="muted small">На странице gist во вкладке Revisions хранится история всех версий. Если что-то пошло не так, оттуда можно достать любую прошлую копию.</p>'+
+        '<p class="muted small">Секретный gist не виден в поиске, но открывается у любого, у кого есть ссылка. Не пересылайте её.</p>'+
+        '<div class="stack"><button class="btn primary" data-s="now">Синхронизировать сейчас</button><button class="btn" data-s="backups">Резервные копии на этом устройстве</button><button class="btn danger" data-s="off">Отключить на этом устройстве</button></div>';
+    }else{
+      body.innerHTML='<p>Данные будут храниться в секретном gist вашего аккаунта GitHub и совпадать на всех устройствах.</p>'+
+        '<ol class="steps small"><li>Откройте GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token.</li><li>Отметьте только право <code>gist</code>. Срок действия выберите сами, например «No expiration».</li><li>Скопируйте токен и вставьте ниже.</li><li>На первом устройстве нажмите «Создать новый gist». На остальных вставьте тот же токен и ID gist, затем «Подключить».</li></ol>'+
+        '<label class="field" style="margin-top:12px"><span>Токен GitHub</span><input type="password" id="s-token" autocomplete="off" value="'+esc(settings.token||'')+'"></label>'+
+        '<label class="field"><span>ID gist (для второго и следующих устройств)</span><input type="text" id="s-gist" placeholder="например, 3f2a9c…" value="'+esc(settings.gistId||'')+'"></label>'+
+        '<div class="stack"><button class="btn primary" data-s="create">Создать новый gist с текущими данными</button><button class="btn" data-s="connect">Подключить существующий gist</button><button class="btn" data-s="backups">Резервные копии на этом устройстве</button></div>'+
+        '<p class="muted small">Токен хранится только в этом браузере.</p>';
+    }
+  }
+  draw();
+  const m=openModal({title:'Синхронизация с GitHub',body:body,wide:true});
+  body.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-s]');if(!b)return;const k=b.dataset.s;
+    if(k==='backups'){m.close();openBackups();return}
+    if(k==='now'){m.close();settings.dirty?pushSync(false):pullSync();return}
+    if(k==='off'){if(await confirmBox('Отключить синхронизацию','Данные останутся на этом устройстве и в gist. Токен будет удалён из этого браузера.','Отключить')){settings.token='';settings.gistId='';settings.lastRemoteUpdatedAt=null;saveSettings();setSync('off','Синхронизация выключена. Данные только на этом устройстве.');draw()}return}
+    const token=body.querySelector('#s-token').value.trim();const gid=body.querySelector('#s-gist').value.trim().replace(/^.*\//,'');
+    if(!token){toast('Вставьте токен GitHub');return}
+    b.disabled=true;
+    try{
+      if(k==='create'){
+        settings.token=token;
+        const g=await gh('POST','/gists',{description:'Kanban board data',public:false,files:{[GIST_FILE]:{content:JSON.stringify(state)}}});
+        settings.gistId=g.id;settings.lastRemoteUpdatedAt=state.updatedAt;rememberPushed(state.updatedAt);settings.dirty=false;settings.lastSyncAt=nowISO();saveSettings();
+        markOk();m.close();toast('Gist создан. ID для других устройств: '+g.id,'Скопировать ID',()=>copyText(g.id),15000);
+      }
+      if(k==='connect'){
+        if(!gid){toast('Вставьте ID gist');b.disabled=false;return}
+        settings.token=token;settings.gistId=gid;
+        const remote=await fetchRemote();
+        saveSettings();m.close();
+        if(!remote){settings.lastRemoteUpdatedAt=null;await pushSync(true);toast('Gist подключён, данные отправлены')}
+        else if(isPristine(state)){adoptRemote(remote);toast('Данные загружены с GitHub')}
+        else showChoice(remote,'connect');
+      }
+    }catch(err){
+      b.disabled=false;syncError(err);
+      if(k==='connect'||k==='create'){settings.gistId=k==='connect'?'':settings.gistId;saveSettings()}
+      toast(syncStatus.text);
+    }
+  });
+}
+function openBackups(){
+  const list=lsGet(K_BAK)||[];
+  const body='<p class="muted small">Автоматические копии: раз в день и перед опасными действиями. Хранятся последние 10.</p>'+
+    (list.length?'<div class="stack">'+list.map((b,i)=>'<div class="field-row" style="justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:8px"><span>'+fmtDateTime(b.at)+'<br><span class="muted small">'+esc(b.reason)+', '+esc(summary(normalizeState(clone(b.data))||freshState()))+'</span></span><span><button class="btn" data-b-dl="'+i+'">Скачать</button> <button class="btn" data-b-rs="'+i+'">Восстановить</button></span></div>').join('')+'</div>':'<p>Копий пока нет.</p>');
+  const m=openModal({title:'Резервные копии на устройстве',body:body,wide:true});
+  m.body.addEventListener('click',async e=>{
+    const dl=e.target.closest('[data-b-dl]'),rs=e.target.closest('[data-b-rs]');
+    if(dl){const b=list[+dl.dataset.bDl];download('kanban-backup-'+b.at.slice(0,10)+'.json',JSON.stringify(b.data,null,2),'application/json')}
+    if(rs){const b=list[+rs.dataset.bRs];if(await confirmBox('Восстановить копию','Текущие данные заменятся копией от '+fmtDateTime(b.at)+'. Перед этим сохранится ещё одна копия.','Восстановить',true)){const ns=normalizeState(clone(b.data));snapshot('Перед восстановлением копии');m.close();commit(()=>{state=ns});toast('Копия восстановлена')}}
+  });
+}
+
+/* ---------- lifecycle ---------- */
+function applyLayout(){document.querySelector('.app').classList.toggle('side-collapsed',!!settings.sideCollapsed)}
+applyLayout();
+(function daily(){const l=lsGet(K_BAK)||[];if(!isPristine(state)&&(!l[0]||l[0].at.slice(0,10)!==nowISO().slice(0,10)))snapshot('Ежедневная копия')})();
+render();
+if(syncEnabled()){settings.dirty?pullSync():pullSync()}
+let lastPull=Date.now();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&syncEnabled()&&Date.now()-lastPull>15000&&!modalStack.length){lastPull=Date.now();pullSync()}});
+window.addEventListener('online',()=>{if(syncEnabled())settings.dirty?pushSync(false):pullSync()});
+setInterval(()=>{if(syncEnabled()&&settings.dirty&&!syncing&&!conflictOpen&&syncStatus.kind!=='conflict'&&navigator.onLine)pushSync(false)},60000);
+let otherTabWarned=false;
+window.addEventListener('storage',e=>{
+  if(e.key!==K_DATA||!e.newValue)return;
+  const s=normalizeState(JSON.parse(e.newValue));if(!s)return;
+  state=s;render();
+  if(!otherTabWarned){otherTabWarned=true;toast('Доска открыта в другой вкладке. Работайте в одной, чтобы изменения не перетирали друг друга.',null,null,9000)}
+});
+window.addEventListener('beforeunload',e=>{if(syncEnabled()&&settings.dirty){e.preventDefault();e.returnValue=''}});
+})();
+</script>
+</body>
+</html>
